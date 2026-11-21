@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гостевой дом</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
+        .day { padding: 10px; background: #fff; border-radius: 5px; text-align: center; cursor: pointer; border: 1px solid #ddd; }
+        .day.booked { background: #ffcccc; }
+        .day.paid { background: #ccffcc; }
+        .form-group { margin-bottom: 10px; }
+        input, button { padding: 8px; width: 100%; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #0056b3; }
+        .booking-list { margin-top: 20px; }
+        .booking-item { background: #fff; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; }
+        .delete-btn { background: #dc3545; width: auto; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Гостевой дом</h1>
+
+    <!-- Календарь -->
+    <div class="calendar" id="calendar"></div>
+
+    <!-- Форма -->
+    <form id="bookingForm">
+        <div class="form-group">
+            <input type="text" id="guestName" placeholder="Имя гостя" required>
+        </div>
+        <div class="form-group">
+            <input type="tel" id="phone" placeholder="Телефон" required>
+        </div>
+        <div class="form-group">
+            <input type="date" id="date" required>
+        </div>
+        <div class="form-group">
+            <input type="number" id="totalPrice" placeholder="Сумма (₽)" required>
+        </div>
+        <div class="form-group">
+            <input type="number" id="prepayment" placeholder="Предоплата (₽)">
+        </div>
+        <button type="submit">Добавить запись</button>
+    </form>
+
+    <!-- Список -->
+    <div class="booking-list" id="bookingList"></div>
+
+    <script>
+        // Загрузка данных
+        let bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+
+        // Функция отрисовки календаря
+        function renderCalendar() {
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+            
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Заголовки дней недели
+            const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            daysOfWeek.forEach(d => {
+                const div = document.createElement('div');
+                div.textContent = d;
+                div.style.fontWeight = 'bold';
+                calendar.appendChild(div);
+            });
+
+            // Пустые ячейки до 1 числа (сдвиг)
+            const firstDay = new Date(year, month, 1).getDay();
+            const offset = firstDay === 0 ? 6 : firstDay - 1; // Пн = 0
+            for (let i = 0; i < offset; i++) {
+                const div = document.createElement('div');
+                calendar.appendChild(div);
+            }
+
+            // Дни
+            for (let i = 1; i <= daysInMonth; i++) {
+                const div = document.createElement('div');
+                div.classList.add('day');
+                div.textContent = i;
+
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const dayBookings = bookings.filter(b => b.date === dateStr);
+                
+                if (dayBookings.length > 0) {
+                    // Если есть предоплата — желтый, если полная — зеленый
+                    const isFullyPaid = dayBookings.some(b => Number(b.prepayment) === Number(b.totalPrice));
+                    div.classList.add(isFullyPaid ? 'paid' : 'booked');
+                }
+
+                calendar.appendChild(div);
+            }
+        }
+
+        // Функция отрисовки списка
+        function renderList() {
+            const list = document.getElementById('bookingList');
+            list.innerHTML = '';
+            bookings.sort((a, b) => a.date.localeCompare(b.date));
+            
+            bookings.forEach((b, index) => {
+                const div = document.createElement('div');
+                div.className = 'booking-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>${b.date}</strong> — ${b.guestName} <br>
+                        <small>${b.phone} | ${b.totalPrice}₽ (аванс: ${b.prepayment}₽)</small>
+                    </div>
+                    <button class="delete-btn" onclick="deleteBooking(${index})">X</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Добавление записи
+        document.getElementById('bookingForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newBooking = {
+                guestName: document.getElementById('guestName').value,
+                phone: document.getElementById('phone').value,
+                date: document.getElementById('date').value,
+                totalPrice: document.getElementById('totalPrice').value,
+                prepayment: document.getElementById('prepayment').value || 0
+            };
+            bookings.push(newBooking);
+            localStorage.setItem('bookings', JSON.stringify(bookings));
+            e.target.reset();
+            renderCalendar();
+            renderList();
+        });
+
+        // Удаление
+        window.deleteBooking = function(index) {
+            if (confirm('Удалить запись?')) {
+                bookings.splice(index, 1);
+                localStorage.setItem('bookings', JSON.stringify(bookings));
+                renderCalendar();
+                renderList();
+            }
+        };
+
+        // Старт
+        renderCalendar();
+        renderList();
+    </script>
+</body>
+</html>
