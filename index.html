@@ -5,108 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Домик в деревне</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2c3e50">
+    <meta name="theme-color" content="#1a1a1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
-        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #f8f9fa; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 15px; background: var(--bg); margin: 0; color: #333; }
+        /* --- ПЕРЕМЕННЫЕ ДЛЯ ТЕМ --- */
+        :root {
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #e0e0e0;
+            --text-muted: #888;
+            --primary: #bb86fc;
+            --primary-hover: #9965d6;
+            --success: #03dac6;
+            --danger: #cf6679;
+            --border: #333;
+        }
+
+        body.light-theme {
+            --bg: #f4f4f9;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #666;
+            --primary: #6200ee;
+            --primary-hover: #3700b3;
+            --success: #018786;
+            --danger: #b00020;
+            --border: #ddd;
+        }
+
+        /* --- БАЗОВЫЕ СТИЛИ --- */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            padding: 15px; 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            transition: background 0.3s, color 0.3s;
+        }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { font-size: 22px; margin: 0; color: var(--primary); }
         
-        /* Экраны */
-        .screen { display: none; }
-        .screen.active { display: block; }
+        .header-btns { display: flex; gap: 10px; }
+        .icon-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;}
+        
+        /* Календарь */
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 20px; }
+        .day { 
+            padding: 12px 0; 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            text-align: center; 
+            font-size: 14px; 
+            border: 1px solid var(--border); 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        .day.booked { background: var(--danger); color: #fff; border-color: var(--danger); font-weight: bold; }
+        .day.paid { background: var(--success); color: #000; border-color: var(--success); font-weight: bold; }
+        
+        /* Формы и карточки */
+        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .form-group { margin-bottom: 12px; }
+        input { 
+            padding: 12px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            border-radius: 8px; 
+            border: 1px solid var(--border); 
+            background: var(--bg); 
+            color: var(--text);
+            font-size: 16px;
+        }
+        button[type="submit"] { background: var(--primary); color: #fff; border: none; cursor: pointer; font-weight: bold; padding: 15px; border-radius: 8px; width: 100%; font-size: 16px;}
+        button[type="submit"]:hover { background: var(--primary-hover); }
+
+        /* Список записей */
+        .booking-item { 
+            background: var(--card-bg); 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid var(--border);
+        }
+        .actions { display: flex; gap: 8px; }
+        .action-btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; text-decoration: none;}
+        .action-btn.del { background: var(--danger); }
         
         /* Лендинг для гостей */
-        .hero { text-align: center; padding: 40px 20px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 20px;}
-        .hero h1 { color: var(--primary); font-size: 32px; margin-bottom: 10px;}
-        .hero p { color: #666; font-size: 16px; line-height: 1.5; margin-bottom: 30px;}
-        .hero img { width: 100%; max-width: 300px; border-radius: 10px; margin-bottom: 20px; object-fit: cover; height: 200px;}
-        .btn { padding: 14px 20px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; text-decoration: none; display: block; box-sizing: border-box; text-align: center;}
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-accent { background: var(--accent); color: white; margin-bottom: 10px;}
-        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .guest-hero { text-align: center; margin-bottom: 30px; }
+        .guest-hero img { width: 100%; border-radius: 12px; max-height: 250px; object-fit: cover; margin-bottom: 15px;}
+        .guest-hero p { color: var(--text-muted); font-size: 16px; }
+        
+        .main-btn { 
+            display: block; 
+            text-align: center; 
+            background: var(--primary); 
+            color: white; 
+            text-decoration: none; 
+            padding: 16px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            font-size: 18px; 
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.3);
+        }
 
-        /* Экран входа */
-        .login-box { max-width: 300px; margin: 100px auto; text-align: center; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
-        .login-box input { margin-bottom: 15px; text-align: center; font-size: 24px; letter-spacing: 5px;}
-        
-        /* Админка (Календарь и форма) */
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logout-btn { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: auto; font-size: 14px;}
-        
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
-        .day { padding: 10px 0; background: #fff; border-radius: 6px; text-align: center; font-size: 14px; cursor: pointer; border: 1px solid #e0e0e0; }
-        .day.booked { background: #ffcccc; border-color: #ff9999; color: #a00; font-weight: bold;}
-        .day.paid { background: #ccffcc; border-color: #99ff99; color: #060; font-weight: bold;}
-        
-        .form-group { margin-bottom: 12px; }
-        input, select { padding: 12px; width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;}
-        button[type="submit"] { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; padding: 15px; border-radius: 8px; width: 100%; font-size: 16px;}
-        
-        .booking-list { margin-top: 20px; }
-        .booking-item { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}
-        .booking-info { flex-grow: 1; }
-        .actions { display: flex; gap: 5px; align-items: center;}
-        .delete-btn { background: #dc3545; width: auto; padding: 8px 12px; font-size: 14px; margin: 0; border: none; color: white; border-radius: 5px;}
-        .call-btn { background: #28a745; width: auto; padding: 8px 12px; font-size: 14px; text-decoration: none; color: white; border-radius: 5px; }
+        /* Утилиты */
+        .hidden { display: none !important; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
-    <!-- 1. ЭКРАН ДЛЯ ГОСТЕЙ -->
-    <div id="guestScreen" class="screen active">
-        <div class="hero">
+    <header>
+        <h1>Домик в деревне</h1>
+        <div class="header-btns">
+            <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+            <button class="icon-btn" onclick="toggleAdmin()">👤</button>
+        </div>
+    </header>
+
+    <!-- ИНТЕРФЕЙС ГОСТЯ -->
+    <div id="guestView">
+        <div class="guest-hero">
             <img src="https://images.unsplash.com/photo-1510798831971-661eb04b3739?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Домик">
-            <h1>Домик в деревне</h1>
-            <p>Уютный гостевой дом с баней и купелью. Идеальное место для отдыха на природе.</p>
-            
-            <!-- Сюда потом вставим ссылку на Max -->
-            <a href="#" class="btn btn-accent">Забронировать в Max</a>
-            <a href="tel:+79000000000" class="btn btn-outline">Позвонить хозяину</a>
-            
-            <!-- Скрытая кнопка для входа админа -->
-            <div style="margin-top: 40px; opacity: 0.3; font-size: 12px; cursor: pointer;" onclick="showLogin()">Вход для персонала</div>
+            <p>Уютный гостевой дом с баней и купелью. Забронируйте свободные даты прямо сейчас.</p>
         </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0; margin-bottom: 15px;">Занятость на месяц</h3>
+            <div class="calendar" id="calendarGuest"></div>
+            <div style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); justify-content: center;">
+                <span><span style="display:inline-block;width:10px;height:10px;background:var(--card-bg);border:1px solid var(--border);border-radius:2px;"></span> Свободно</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:var(--danger);border-radius:2px;"></span> Занято</span>
+            </div>
+        </div>
+
+        <a href="#" class="main-btn">Забронировать в Max</a>
+        <a href="tel:+79000000000" class="main-btn" style="background: transparent; border: 2px solid var(--primary); color: var(--primary); box-shadow: none;">Позвонить</a>
     </div>
 
-    <!-- 2. ЭКРАН ВХОДА -->
-    <div id="loginScreen" class="screen">
-        <div class="login-box">
-            <h2>Вход в админку</h2>
-            <p style="color: #666; font-size: 14px;">Введите пин-код</p>
-            <input type="password" id="pinInput" placeholder="••••" maxlength="4">
-            <button class="btn btn-primary" onclick="checkPin()">Войти</button>
-        </div>
-    </div>
-
-    <!-- 3. ЭКРАН АДМИНКИ -->
-    <div id="adminScreen" class="screen">
-        <div class="admin-header">
-            <h2>Записи</h2>
-            <button class="logout-btn" onclick="logout()">Выйти</button>
+    <!-- ИНТЕРФЕЙС АДМИНА -->
+    <div id="adminView" class="hidden">
+        <div class="flex-between" style="margin-bottom: 15px;">
+            <h2 style="margin: 0; font-size: 18px; color: var(--text);">Панель управления</h2>
+            <button class="action-btn del" onclick="logoutAdmin()">Выйти</button>
         </div>
 
-        <div class="calendar" id="calendar"></div>
+        <div class="card">
+            <h3 style="margin-top: 0; margin-bottom: 15px;">Добавить запись</h3>
+            <form id="bookingForm">
+                <div class="form-group"><input type="text" id="guestName" placeholder="Имя гостя" required></div>
+                <div class="form-group"><input type="tel" id="phone" placeholder="Телефон" required></div>
+                <div class="form-group"><input type="date" id="date" required></div>
+                <div class="form-group"><input type="number" id="totalPrice" placeholder="Сумма (₽)" required></div>
+                <div class="form-group"><input type="number" id="prepayment" placeholder="Предоплата (₽)"></div>
+                <button type="submit">Сохранить</button>
+            </form>
+        </div>
 
-        <form id="bookingForm">
-            <div class="form-group">
-                <input type="text" id="guestName" placeholder="Имя гостя" required>
-            </div>
-            <div class="form-group">
-                <input type="tel" id="phone" placeholder="Телефон" required>
-            </div>
-            <div class="form-group">
-                <input type="date" id="date" required>
-            </div>
-            <div class="form-group">
-                <input type="number" id="totalPrice" placeholder="Сумма (₽)" required>
-            </div>
-            <div class="form-group">
-                <input type="number" id="prepayment" placeholder="Предоплата (₽)">
-            </div>
-            <button type="submit">Добавить запись</button>
-        </form>
+        <div class="card">
+            <h3 style="margin-top: 0; margin-bottom: 15px;">Календарь</h3>
+            <div class="calendar" id="calendarAdmin"></div>
+        </div>
 
-        <div class="booking-list" id="bookingList"></div>
+        <h3>Все записи</h3>
+        <div id="bookingList"></div>
     </div>
 
     <!-- Firebase SDK -->
@@ -130,36 +198,45 @@
     </script>
 
     <script>
-        // --- ЛОГИКА ЭКРАНОВ ---
-        function showLogin() {
-            document.getElementById('guestScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
+        // --- ТЕМА ---
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+        }
+        // Восстановление темы
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeBtn').textContent = '☀️';
         }
 
-        function logout() {
-            localStorage.removeItem('adminLoggedIn'); // Стираем память о входе
-            document.getElementById('adminScreen').classList.remove('active');
-            document.getElementById('guestScreen').classList.add('active');
-        }
-
-        function checkPin() {
-            const pin = document.getElementById('pinInput').value;
-            if (pin === '1234') { // <--- ЗДЕСЬ МЕНЯЕШЬ ПАРОЛЬ
-                localStorage.setItem('adminLoggedIn', 'true');
-                document.getElementById('loginScreen').classList.remove('active');
-                document.getElementById('adminScreen').classList.add('active');
-            } else {
-                alert('Неверный пин-код');
+        // --- АВТОРИЗАЦИЯ ---
+        let isAdmin = false;
+        function toggleAdmin() {
+            if (isAdmin) {
+                logoutAdmin();
+                return;
+            }
+            const pin = prompt("Введите пин-код администратора:");
+            if (pin === '1234') { // <--- СМЕНИТЬ ПАРОЛЬ ЗДЕСЬ
+                isAdmin = true;
+                document.getElementById('guestView').classList.add('hidden');
+                document.getElementById('adminView').classList.remove('hidden');
+                // Принудительно обновляем календарь
+                if(window.renderAdminCalendar) window.renderAdminCalendar();
+            } else if (pin !== null) {
+                alert("Неверный пин-код");
             }
         }
 
-        // При загрузке проверяем, не залогинен ли уже админ
-        if (localStorage.getItem('adminLoggedIn') === 'true') {
-            document.getElementById('guestScreen').classList.remove('active');
-            document.getElementById('adminScreen').classList.add('active');
+        function logoutAdmin() {
+            isAdmin = false;
+            document.getElementById('adminView').classList.add('hidden');
+            document.getElementById('guestView').classList.remove('hidden');
         }
 
-        // --- ЛОГИКА FIREBASE И КАЛЕНДАРЯ ---
+        // --- ЛОГИКА FIREBASE ---
         window.addEventListener('load', () => {
             const db = window.db;
             const { collection, addDoc, deleteDoc, doc, onSnapshot } = window.firebaseFns;
@@ -171,60 +248,80 @@
                 snapshot.forEach((doc) => {
                     bookings.push({ id: doc.id, ...doc.data() });
                 });
-                renderCalendar();
-                renderList();
+                
+                // Отрисовываем календарь для гостя
+                renderCalendar('calendarGuest', bookings, false);
+                // Отрисовываем календарь для админа (с суммами)
+                renderCalendar('calendarAdmin', bookings, true);
+                // Отрисовываем список (только для админа)
+                renderList(bookings);
             });
 
-            function renderCalendar() {
-                const calendar = document.getElementById('calendar');
+            function renderCalendar(elementId, data, isAdminView) {
+                const calendar = document.getElementById(elementId);
+                if(!calendar) return;
                 calendar.innerHTML = '';
+                
                 const now = new Date();
                 const year = now.getFullYear();
                 const month = now.getMonth();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
+
                 const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
                 daysOfWeek.forEach(d => {
                     const div = document.createElement('div');
                     div.textContent = d;
-                    div.style.fontWeight = 'bold'; div.style.textAlign = 'center'; div.style.fontSize = '12px'; div.style.color = '#666';
+                    div.style.fontWeight = 'bold'; div.style.textAlign = 'center'; div.style.fontSize = '12px'; div.style.color = 'var(--text-muted)';
                     calendar.appendChild(div);
                 });
+
                 const firstDay = new Date(year, month, 1).getDay();
                 const offset = firstDay === 0 ? 6 : firstDay - 1;
                 for (let i = 0; i < offset; i++) {
                     const div = document.createElement('div');
                     calendar.appendChild(div);
                 }
+
                 for (let i = 1; i <= daysInMonth; i++) {
                     const div = document.createElement('div');
                     div.classList.add('day');
                     div.textContent = i;
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                    const dayBookings = bookings.filter(b => b.date === dateStr);
+                    const dayBookings = data.filter(b => b.date === dateStr);
+                    
                     if (dayBookings.length > 0) {
-                        const isFullyPaid = dayBookings.some(b => Number(b.prepayment) === Number(b.totalPrice));
+                        // Если админ смотрит - помечаем, что занято (красным, если не оплачено, зеленым, если оплачено)
+                        const isFullyPaid = dayBookings.every(b => Number(b.prepayment) >= Number(b.totalPrice));
                         div.classList.add(isFullyPaid ? 'paid' : 'booked');
+                        
+                        // В админке при клике на день можем вывести инфу
+                        if (isAdminView) {
+                            div.onclick = () => alert(`Гость: ${dayBookings[0].guestName}\nТел: ${dayBookings[0].phone}\nСумма: ${dayBookings[0].totalPrice}₽`);
+                        }
                     }
                     calendar.appendChild(div);
                 }
             }
 
-            function renderList() {
+            // Отдельная функция для отрисовки списка в админке
+            function renderList(data) {
                 const list = document.getElementById('bookingList');
+                if(!list) return;
                 list.innerHTML = '';
-                bookings.sort((a, b) => a.date.localeCompare(b.date));
-                bookings.forEach((b) => {
+                data.sort((a, b) => a.date.localeCompare(b.date));
+                
+                data.forEach((b) => {
                     const div = document.createElement('div');
                     div.className = 'booking-item';
                     const cleanPhone = b.phone.replace(/[^0-9]/g, '');
                     div.innerHTML = `
-                        <div class="booking-info">
+                        <div>
                             <strong>${b.date}</strong> — ${b.guestName} <br>
-                            <small>${b.totalPrice}₽ (аванс: ${b.prepayment}₽)</small>
+                            <small style="color:var(--text-muted)">${b.totalPrice}₽ (аванс: ${b.prepayment}₽)</small>
                         </div>
                         <div class="actions">
-                            <a href="tel:${b.phone}" class="call-btn" title="Позвонить">📞</a>
-                            <button class="delete-btn" onclick="deleteBooking('${b.id}')">X</button>
+                            <a href="tel:${b.phone}" class="action-btn">📞</a>
+                            <button class="action-btn del" onclick="deleteBooking('${b.id}')">X</button>
                         </div>
                     `;
                     list.appendChild(div);
