@@ -1,0 +1,15 @@
+{
+  "name": "Домик в деревне",
+  "short_name": "Домик",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/263/263115.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
