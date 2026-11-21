@@ -5,55 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Домик в деревне</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
+    <meta name="theme-color" content="#2c3e50">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 15px; background: #f4f4f4; margin: 0; }
-        h1 { font-size: 24px; text-align: center; color: #333; margin-top: 10px;}
+        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #f8f9fa; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 15px; background: var(--bg); margin: 0; color: #333; }
+        
+        /* Экраны */
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        /* Лендинг для гостей */
+        .hero { text-align: center; padding: 40px 20px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 20px;}
+        .hero h1 { color: var(--primary); font-size: 32px; margin-bottom: 10px;}
+        .hero p { color: #666; font-size: 16px; line-height: 1.5; margin-bottom: 30px;}
+        .hero img { width: 100%; max-width: 300px; border-radius: 10px; margin-bottom: 20px; object-fit: cover; height: 200px;}
+        .btn { padding: 14px 20px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; text-decoration: none; display: block; box-sizing: border-box; text-align: center;}
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-accent { background: var(--accent); color: white; margin-bottom: 10px;}
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+
+        /* Экран входа */
+        .login-box { max-width: 300px; margin: 100px auto; text-align: center; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
+        .login-box input { margin-bottom: 15px; text-align: center; font-size: 24px; letter-spacing: 5px;}
+        
+        /* Админка (Календарь и форма) */
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logout-btn { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: auto; font-size: 14px;}
+        
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
-        .day { padding: 10px 0; background: #fff; border-radius: 6px; text-align: center; font-size: 14px; cursor: pointer; border: 1px solid #e0e0e0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
+        .day { padding: 10px 0; background: #fff; border-radius: 6px; text-align: center; font-size: 14px; cursor: pointer; border: 1px solid #e0e0e0; }
         .day.booked { background: #ffcccc; border-color: #ff9999; color: #a00; font-weight: bold;}
         .day.paid { background: #ccffcc; border-color: #99ff99; color: #060; font-weight: bold;}
+        
         .form-group { margin-bottom: 12px; }
-        input, button { padding: 12px; width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;}
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 5px;}
-        button:hover { background: #0056b3; }
+        input, select { padding: 12px; width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;}
+        button[type="submit"] { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; padding: 15px; border-radius: 8px; width: 100%; font-size: 16px;}
+        
         .booking-list { margin-top: 20px; }
         .booking-item { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}
         .booking-info { flex-grow: 1; }
         .actions { display: flex; gap: 5px; align-items: center;}
-        .delete-btn { background: #dc3545; width: auto; padding: 8px 12px; font-size: 14px; margin: 0;}
-        .call-btn { background: #28a745; width: auto; padding: 8px 12px; font-size: 14px; text-decoration: none; color: white; border-radius: 8px; display: inline-block; margin: 0;}
-        .wa-btn { background: #25D366; width: auto; padding: 8px 12px; font-size: 14px; text-decoration: none; color: white; border-radius: 8px; display: inline-block; margin: 0;}
+        .delete-btn { background: #dc3545; width: auto; padding: 8px 12px; font-size: 14px; margin: 0; border: none; color: white; border-radius: 5px;}
+        .call-btn { background: #28a745; width: auto; padding: 8px 12px; font-size: 14px; text-decoration: none; color: white; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>Домик в деревне</h1>
+    <!-- 1. ЭКРАН ДЛЯ ГОСТЕЙ -->
+    <div id="guestScreen" class="screen active">
+        <div class="hero">
+            <img src="https://images.unsplash.com/photo-1510798831971-661eb04b3739?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Домик">
+            <h1>Домик в деревне</h1>
+            <p>Уютный гостевой дом с баней и купелью. Идеальное место для отдыха на природе.</p>
+            
+            <!-- Сюда потом вставим ссылку на Max -->
+            <a href="#" class="btn btn-accent">Забронировать в Max</a>
+            <a href="tel:+79000000000" class="btn btn-outline">Позвонить хозяину</a>
+            
+            <!-- Скрытая кнопка для входа админа -->
+            <div style="margin-top: 40px; opacity: 0.3; font-size: 12px; cursor: pointer;" onclick="showLogin()">Вход для персонала</div>
+        </div>
+    </div>
 
-    <div class="calendar" id="calendar"></div>
+    <!-- 2. ЭКРАН ВХОДА -->
+    <div id="loginScreen" class="screen">
+        <div class="login-box">
+            <h2>Вход в админку</h2>
+            <p style="color: #666; font-size: 14px;">Введите пин-код</p>
+            <input type="password" id="pinInput" placeholder="••••" maxlength="4">
+            <button class="btn btn-primary" onclick="checkPin()">Войти</button>
+        </div>
+    </div>
 
-    <form id="bookingForm">
-        <div class="form-group">
-            <input type="text" id="guestName" placeholder="Имя гостя" required>
+    <!-- 3. ЭКРАН АДМИНКИ -->
+    <div id="adminScreen" class="screen">
+        <div class="admin-header">
+            <h2>Записи</h2>
+            <button class="logout-btn" onclick="logout()">Выйти</button>
         </div>
-        <div class="form-group">
-            <input type="tel" id="phone" placeholder="Телефон" required>
-        </div>
-        <div class="form-group">
-            <input type="date" id="date" required>
-        </div>
-        <div class="form-group">
-            <input type="number" id="totalPrice" placeholder="Сумма (₽)" required>
-        </div>
-        <div class="form-group">
-            <input type="number" id="prepayment" placeholder="Предоплата (₽)">
-        </div>
-        <button type="submit">Добавить запись</button>
-    </form>
 
-    <div class="booking-list" id="bookingList"></div>
+        <div class="calendar" id="calendar"></div>
+
+        <form id="bookingForm">
+            <div class="form-group">
+                <input type="text" id="guestName" placeholder="Имя гостя" required>
+            </div>
+            <div class="form-group">
+                <input type="tel" id="phone" placeholder="Телефон" required>
+            </div>
+            <div class="form-group">
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <input type="number" id="totalPrice" placeholder="Сумма (₽)" required>
+            </div>
+            <div class="form-group">
+                <input type="number" id="prepayment" placeholder="Предоплата (₽)">
+            </div>
+            <button type="submit">Добавить запись</button>
+        </form>
+
+        <div class="booking-list" id="bookingList"></div>
+    </div>
 
     <!-- Firebase SDK -->
     <script type="module">
@@ -76,14 +130,42 @@
     </script>
 
     <script>
+        // --- ЛОГИКА ЭКРАНОВ ---
+        function showLogin() {
+            document.getElementById('guestScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('adminLoggedIn'); // Стираем память о входе
+            document.getElementById('adminScreen').classList.remove('active');
+            document.getElementById('guestScreen').classList.add('active');
+        }
+
+        function checkPin() {
+            const pin = document.getElementById('pinInput').value;
+            if (pin === '1234') { // <--- ЗДЕСЬ МЕНЯЕШЬ ПАРОЛЬ
+                localStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('adminScreen').classList.add('active');
+            } else {
+                alert('Неверный пин-код');
+            }
+        }
+
+        // При загрузке проверяем, не залогинен ли уже админ
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            document.getElementById('guestScreen').classList.remove('active');
+            document.getElementById('adminScreen').classList.add('active');
+        }
+
+        // --- ЛОГИКА FIREBASE И КАЛЕНДАРЯ ---
         window.addEventListener('load', () => {
             const db = window.db;
             const { collection, addDoc, deleteDoc, doc, onSnapshot } = window.firebaseFns;
             const bookingsCollection = collection(db, "bookings");
-
             let bookings = [];
 
-            // Слушаем изменения в базе
             onSnapshot(bookingsCollection, (snapshot) => {
                 bookings = [];
                 snapshot.forEach((doc) => {
@@ -96,37 +178,29 @@
             function renderCalendar() {
                 const calendar = document.getElementById('calendar');
                 calendar.innerHTML = '';
-                
                 const now = new Date();
                 const year = now.getFullYear();
                 const month = now.getMonth();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-
                 const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
                 daysOfWeek.forEach(d => {
                     const div = document.createElement('div');
                     div.textContent = d;
-                    div.style.fontWeight = 'bold';
-                    div.style.textAlign = 'center';
-                    div.style.fontSize = '12px';
-                    div.style.color = '#666';
+                    div.style.fontWeight = 'bold'; div.style.textAlign = 'center'; div.style.fontSize = '12px'; div.style.color = '#666';
                     calendar.appendChild(div);
                 });
-
                 const firstDay = new Date(year, month, 1).getDay();
                 const offset = firstDay === 0 ? 6 : firstDay - 1;
                 for (let i = 0; i < offset; i++) {
                     const div = document.createElement('div');
                     calendar.appendChild(div);
                 }
-
                 for (let i = 1; i <= daysInMonth; i++) {
                     const div = document.createElement('div');
                     div.classList.add('day');
                     div.textContent = i;
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                     const dayBookings = bookings.filter(b => b.date === dateStr);
-                    
                     if (dayBookings.length > 0) {
                         const isFullyPaid = dayBookings.some(b => Number(b.prepayment) === Number(b.totalPrice));
                         div.classList.add(isFullyPaid ? 'paid' : 'booked');
@@ -139,15 +213,10 @@
                 const list = document.getElementById('bookingList');
                 list.innerHTML = '';
                 bookings.sort((a, b) => a.date.localeCompare(b.date));
-                
                 bookings.forEach((b) => {
                     const div = document.createElement('div');
                     div.className = 'booking-item';
-                    
-                    // Формируем ссылки для звонка и WhatsApp
                     const cleanPhone = b.phone.replace(/[^0-9]/g, '');
-                    const waLink = `https://wa.me/${cleanPhone}`;
-                    
                     div.innerHTML = `
                         <div class="booking-info">
                             <strong>${b.date}</strong> — ${b.guestName} <br>
@@ -155,7 +224,6 @@
                         </div>
                         <div class="actions">
                             <a href="tel:${b.phone}" class="call-btn" title="Позвонить">📞</a>
-                            <a href="${waLink}" target="_blank" class="wa-btn" title="WhatsApp">💬</a>
                             <button class="delete-btn" onclick="deleteBooking('${b.id}')">X</button>
                         </div>
                     `;
@@ -172,23 +240,15 @@
                     totalPrice: document.getElementById('totalPrice').value,
                     prepayment: document.getElementById('prepayment').value || 0
                 };
-                
                 try {
                     await addDoc(bookingsCollection, newBooking);
                     e.target.reset();
-                } catch (error) {
-                    console.error("Ошибка при добавлении: ", error);
-                    alert('Ошибка: ' + error.message);
-                }
+                } catch (error) { alert('Ошибка: ' + error.message); }
             });
 
             window.deleteBooking = async function(id) {
                 if (confirm('Удалить запись?')) {
-                    try {
-                        await deleteDoc(doc(db, "bookings", id));
-                    } catch (error) {
-                        console.error("Ошибка при удалении: ", error);
-                    }
+                    try { await deleteDoc(doc(db, "bookings", id)); } catch (error) { console.error(error); }
                 }
             };
         });
