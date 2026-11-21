@@ -3,30 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Гостевой дом</title>
+    <title>Домик в деревне</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 15px; background: #f4f4f4; margin: 0; }
+        h1 { font-size: 24px; text-align: center; color: #333; margin-top: 10px;}
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
-        .day { padding: 10px; background: #fff; border-radius: 5px; text-align: center; cursor: pointer; border: 1px solid #ddd; }
-        .day.booked { background: #ffcccc; }
-        .day.paid { background: #ccffcc; }
-        .form-group { margin-bottom: 10px; }
-        input, button { padding: 8px; width: 100%; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        .day { padding: 10px 0; background: #fff; border-radius: 6px; text-align: center; font-size: 14px; cursor: pointer; border: 1px solid #e0e0e0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
+        .day.booked { background: #ffcccc; border-color: #ff9999; color: #a00; font-weight: bold;}
+        .day.paid { background: #ccffcc; border-color: #99ff99; color: #060; font-weight: bold;}
+        .form-group { margin-bottom: 12px; }
+        input, button { padding: 12px; width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;}
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 5px;}
         button:hover { background: #0056b3; }
         .booking-list { margin-top: 20px; }
-        .booking-item { background: #fff; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; }
-        .delete-btn { background: #dc3545; width: auto; padding: 5px 10px; }
+        .booking-item { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}
+        .booking-info { flex-grow: 1; }
+        .actions { display: flex; gap: 5px; align-items: center;}
+        .delete-btn { background: #dc3545; width: auto; padding: 8px 12px; font-size: 14px; margin: 0;}
+        .call-btn { background: #28a745; width: auto; padding: 8px 12px; font-size: 14px; text-decoration: none; color: white; border-radius: 8px; display: inline-block; margin: 0;}
+        .wa-btn { background: #25D366; width: auto; padding: 8px 12px; font-size: 14px; text-decoration: none; color: white; border-radius: 8px; display: inline-block; margin: 0;}
     </style>
 </head>
 <body>
 
-    <h1>Гостевой дом</h1>
+    <h1>Домик в деревне</h1>
 
-    <!-- Календарь -->
     <div class="calendar" id="calendar"></div>
 
-    <!-- Форма -->
     <form id="bookingForm">
         <div class="form-group">
             <input type="text" id="guestName" placeholder="Имя гостя" required>
@@ -46,109 +53,145 @@
         <button type="submit">Добавить запись</button>
     </form>
 
-    <!-- Список -->
     <div class="booking-list" id="bookingList"></div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEWN8qG6hsO_JgnFzUpEPRDAsEGVf-wkw",
+        authDomain: "domik-v-derevne.firebaseapp.com",
+        projectId: "domik-v-derevne",
+        storageBucket: "domik-v-derevne.firebasestorage.app",
+        messagingSenderId: "119021071606",
+        appId: "1:119021071606:web:d220c26fe1c4abf7c250d7"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      window.db = db;
+      window.firebaseFns = { collection, addDoc, deleteDoc, doc, onSnapshot };
+    </script>
+
     <script>
-        // Загрузка данных
-        let bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+        window.addEventListener('load', () => {
+            const db = window.db;
+            const { collection, addDoc, deleteDoc, doc, onSnapshot } = window.firebaseFns;
+            const bookingsCollection = collection(db, "bookings");
 
-        // Функция отрисовки календаря
-        function renderCalendar() {
-            const calendar = document.getElementById('calendar');
-            calendar.innerHTML = '';
-            
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let bookings = [];
 
-            // Заголовки дней недели
-            const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-            daysOfWeek.forEach(d => {
-                const div = document.createElement('div');
-                div.textContent = d;
-                div.style.fontWeight = 'bold';
-                calendar.appendChild(div);
-            });
-
-            // Пустые ячейки до 1 числа (сдвиг)
-            const firstDay = new Date(year, month, 1).getDay();
-            const offset = firstDay === 0 ? 6 : firstDay - 1; // Пн = 0
-            for (let i = 0; i < offset; i++) {
-                const div = document.createElement('div');
-                calendar.appendChild(div);
-            }
-
-            // Дни
-            for (let i = 1; i <= daysInMonth; i++) {
-                const div = document.createElement('div');
-                div.classList.add('day');
-                div.textContent = i;
-
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                const dayBookings = bookings.filter(b => b.date === dateStr);
-                
-                if (dayBookings.length > 0) {
-                    // Если есть предоплата — желтый, если полная — зеленый
-                    const isFullyPaid = dayBookings.some(b => Number(b.prepayment) === Number(b.totalPrice));
-                    div.classList.add(isFullyPaid ? 'paid' : 'booked');
-                }
-
-                calendar.appendChild(div);
-            }
-        }
-
-        // Функция отрисовки списка
-        function renderList() {
-            const list = document.getElementById('bookingList');
-            list.innerHTML = '';
-            bookings.sort((a, b) => a.date.localeCompare(b.date));
-            
-            bookings.forEach((b, index) => {
-                const div = document.createElement('div');
-                div.className = 'booking-item';
-                div.innerHTML = `
-                    <div>
-                        <strong>${b.date}</strong> — ${b.guestName} <br>
-                        <small>${b.phone} | ${b.totalPrice}₽ (аванс: ${b.prepayment}₽)</small>
-                    </div>
-                    <button class="delete-btn" onclick="deleteBooking(${index})">X</button>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        // Добавление записи
-        document.getElementById('bookingForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newBooking = {
-                guestName: document.getElementById('guestName').value,
-                phone: document.getElementById('phone').value,
-                date: document.getElementById('date').value,
-                totalPrice: document.getElementById('totalPrice').value,
-                prepayment: document.getElementById('prepayment').value || 0
-            };
-            bookings.push(newBooking);
-            localStorage.setItem('bookings', JSON.stringify(bookings));
-            e.target.reset();
-            renderCalendar();
-            renderList();
-        });
-
-        // Удаление
-        window.deleteBooking = function(index) {
-            if (confirm('Удалить запись?')) {
-                bookings.splice(index, 1);
-                localStorage.setItem('bookings', JSON.stringify(bookings));
+            // Слушаем изменения в базе
+            onSnapshot(bookingsCollection, (snapshot) => {
+                bookings = [];
+                snapshot.forEach((doc) => {
+                    bookings.push({ id: doc.id, ...doc.data() });
+                });
                 renderCalendar();
                 renderList();
-            }
-        };
+            });
 
-        // Старт
-        renderCalendar();
-        renderList();
+            function renderCalendar() {
+                const calendar = document.getElementById('calendar');
+                calendar.innerHTML = '';
+                
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+                daysOfWeek.forEach(d => {
+                    const div = document.createElement('div');
+                    div.textContent = d;
+                    div.style.fontWeight = 'bold';
+                    div.style.textAlign = 'center';
+                    div.style.fontSize = '12px';
+                    div.style.color = '#666';
+                    calendar.appendChild(div);
+                });
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const offset = firstDay === 0 ? 6 : firstDay - 1;
+                for (let i = 0; i < offset; i++) {
+                    const div = document.createElement('div');
+                    calendar.appendChild(div);
+                }
+
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const div = document.createElement('div');
+                    div.classList.add('day');
+                    div.textContent = i;
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                    const dayBookings = bookings.filter(b => b.date === dateStr);
+                    
+                    if (dayBookings.length > 0) {
+                        const isFullyPaid = dayBookings.some(b => Number(b.prepayment) === Number(b.totalPrice));
+                        div.classList.add(isFullyPaid ? 'paid' : 'booked');
+                    }
+                    calendar.appendChild(div);
+                }
+            }
+
+            function renderList() {
+                const list = document.getElementById('bookingList');
+                list.innerHTML = '';
+                bookings.sort((a, b) => a.date.localeCompare(b.date));
+                
+                bookings.forEach((b) => {
+                    const div = document.createElement('div');
+                    div.className = 'booking-item';
+                    
+                    // Формируем ссылки для звонка и WhatsApp
+                    const cleanPhone = b.phone.replace(/[^0-9]/g, '');
+                    const waLink = `https://wa.me/${cleanPhone}`;
+                    
+                    div.innerHTML = `
+                        <div class="booking-info">
+                            <strong>${b.date}</strong> — ${b.guestName} <br>
+                            <small>${b.totalPrice}₽ (аванс: ${b.prepayment}₽)</small>
+                        </div>
+                        <div class="actions">
+                            <a href="tel:${b.phone}" class="call-btn" title="Позвонить">📞</a>
+                            <a href="${waLink}" target="_blank" class="wa-btn" title="WhatsApp">💬</a>
+                            <button class="delete-btn" onclick="deleteBooking('${b.id}')">X</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newBooking = {
+                    guestName: document.getElementById('guestName').value,
+                    phone: document.getElementById('phone').value,
+                    date: document.getElementById('date').value,
+                    totalPrice: document.getElementById('totalPrice').value,
+                    prepayment: document.getElementById('prepayment').value || 0
+                };
+                
+                try {
+                    await addDoc(bookingsCollection, newBooking);
+                    e.target.reset();
+                } catch (error) {
+                    console.error("Ошибка при добавлении: ", error);
+                    alert('Ошибка: ' + error.message);
+                }
+            });
+
+            window.deleteBooking = async function(id) {
+                if (confirm('Удалить запись?')) {
+                    try {
+                        await deleteDoc(doc(db, "bookings", id));
+                    } catch (error) {
+                        console.error("Ошибка при удалении: ", error);
+                    }
+                }
+            };
+        });
     </script>
 </body>
 </html>
