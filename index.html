@@ -2,152 +2,241 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бронирование - Домик в деревне</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Домик в деревне</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         :root {
-            --bg: #121212; --card-bg: #1e1e1e; --text: #e0e0e0; --text-muted: #888;
-            --primary: #bb86fc; --primary-hover: #9965d6; --success: #03dac6;
-            --danger: #cf6679; --border: #333; --input-bg: #2a2a2a;
+            --bg: #0f0f13; --card: #1c1c24; --text: #ffffff; --text-muted: #8a8a9e;
+            --primary: #7c3aed; --primary-hover: #6d28d9; --accent: #10b981;
+            --danger: #ef4444; --border: #2d2d3d;
         }
         body.light-theme {
-            --bg: #f4f4f9; --card-bg: #ffffff; --text: #1a1a1a; --text-muted: #666;
-            --primary: #6200ee; --primary-hover: #3700b3; --success: #018786;
-            --danger: #b00020; --border: #ddd; --input-bg: #f9f9f9;
+            --bg: #f8f9fa; --card: #ffffff; --text: #1a1a1a; --text-muted: #666;
+            --primary: #6d28d9; --primary-hover: #5b21b6; --accent: #059669;
+            --danger: #dc2626; --border: #e5e7eb;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 15px; background: var(--bg); color: var(--text); margin: 0; transition: background 0.3s; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        h1 { font-size: 20px; margin: 0; color: var(--primary); }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: background 0.3s; }
         
-        .icon-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 16px;}
+        /* Хедер */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--bg); position: sticky; top: 0; z-index: 10; }
+        h1 { font-size: 18px; margin: 0; font-weight: 600; }
+        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;}
+
+        /* Лендинг */
+        .hero { padding: 40px 20px; text-align: center; background: linear-gradient(180deg, rgba(124,58,237,0.1) 0%, var(--bg) 100%); }
+        .hero h2 { font-size: 32px; margin: 0 0 15px 0; line-height: 1.2; }
+        .hero p { color: var(--text-muted); font-size: 16px; line-height: 1.5; margin-bottom: 30px; }
         
-        /* Календарь */
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 15px; }
-        .day { padding: 10px 0; background: var(--card-bg); border-radius: 6px; text-align: center; font-size: 14px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-        .day.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .day.booked, .day.blocked { background: var(--danger); color: #fff; border-color: var(--danger); cursor: not-allowed; opacity: 0.7;}
+        /* Календарь превью */
+        .calendar-preview { padding: 0 20px; margin-bottom: 30px; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); transition: 0.2s; }
+        .cal-day.free { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: var(--accent); cursor: pointer; }
+        .cal-day.busy { background: rgba(239, 68, 68, 0.1); color: var(--danger); opacity: 0.5; text-decoration: line-through;}
+        .cal-day.empty { background: transparent; border: none; }
+
+        /* Главная кнопка */
+        .main-btn { display: block; width: calc(100% - 40px); margin: 0 20px; background: var(--primary); color: white; text-align: center; padding: 18px; border-radius: 16px; font-size: 18px; font-weight: bold; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(124,58,237,0.3); transition: 0.2s;}
+        .main-btn:active { transform: scale(0.98); }
+
+        /* Модальное окно (Визард) */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--card); width: 100%; max-height: 90vh; border-radius: 24px 24px 0 0; padding: 25px 20px; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
         
-        /* Формы */
-        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 5px; font-size: 13px; color: var(--text-muted); }
-        input, select { padding: 12px; width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 16px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 20px; font-weight: bold; margin: 0; }
+        .close-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 0; }
+        
+        /* Шаги визарда */
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px; }
+        input, select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; outline: none; }
+        input:focus { border-color: var(--primary); }
+        
         .row { display: flex; gap: 10px; }
         .row > div { flex: 1; }
-        
-        button[type="submit"] { background: var(--primary); color: #fff; border: none; cursor: pointer; font-weight: bold; padding: 15px; border-radius: 8px; width: 100%; font-size: 16px; margin-top: 10px;}
-        button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .total-price { font-size: 24px; font-weight: bold; text-align: center; margin: 15px 0; color: var(--success); }
-        
+
+        .nav-btns { display: flex; gap: 10px; margin-top: 25px; }
+        .nav-btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .nav-btn.next { background: var(--primary); color: white; }
+        .nav-btn.back { background: var(--border); color: var(--text); }
+
+        /* Чек */
+        .receipt { background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .receipt-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); font-size: 18px; font-weight: bold; color: var(--accent); }
+
         /* Админка */
-        .admin-section { border: 2px dashed var(--border); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .admin-title { color: var(--danger); font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
+        .admin-panel { padding: 20px; display: none; }
+        .admin-panel.active { display: block; }
+        .admin-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .admin-title { color: var(--primary); font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         
-        .booking-item { background: var(--card-bg); padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--primary); position: relative;}
-        .booking-item.blocked-item { border-left-color: var(--danger); opacity: 0.8;}
-        .del-btn { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; position: absolute; top: 10px; right: 10px; font-size: 12px;}
-        
-        .hidden { display: none !important; }
+        .booking-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .booking-item.blocked { border-left-color: var(--danger); opacity: 0.7; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Домик в деревне</h1>
-        <div>
+        <div style="display: flex; gap: 10px;">
             <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
             <button class="icon-btn" onclick="toggleAdmin()">👤</button>
         </div>
     </header>
 
-    <!-- ================= ИНТЕРФЕЙС ГОСТЯ ================= -->
-    <div id="guestView">
-        <div class="card">
-            <h3 style="margin-top:0">Выберите даты</h3>
-            <div class="calendar" id="calendarGuest"></div>
-            
-            <div class="row">
-                <div class="form-group">
-                    <label>Заезд (после 14:00)</label>
-                    <input type="date" id="g_checkIn">
-                </div>
-                <div class="form-group">
-                    <label>Выезд (до 12:00)</label>
-                    <input type="date" id="g_checkOut">
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="form-group">
-                    <label>Взрослые</label>
-                    <input type="number" id="g_adults" value="2" min="1">
-                </div>
-                <div class="form-group">
-                    <label>Дети</label>
-                    <input type="number" id="g_children" value="0" min="0">
-                </div>
+    <!-- ГЛАВНАЯ СТРАНИЦА (ЛЕНДИНГ) -->
+    <div id="mainPage">
+        <div class="hero">
+            <h2>Уютный домик<br>с баней и купелью</h2>
+            <p>Идеальное место для отдыха на природе. Забронируйте даты онлайн за пару минут.</p>
+        </div>
+
+        <div class="calendar-preview">
+            <h3 style="margin-bottom: 15px; font-size: 16px;">Свободные даты</h3>
+            <div class="cal-grid" id="previewCalendar"></div>
+            <div style="display: flex; gap: 15px; margin-top: 15px; font-size: 12px; justify-content: center;">
+                <span><span style="display:inline-block;width:10px;height:10px;background:rgba(16,185,129,0.2);border-radius:2px;"></span> Свободно</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:rgba(239,68,68,0.2);border-radius:2px;"></span> Занято</span>
             </div>
         </div>
 
-        <div class="card">
-            <h3 style="margin-top:0">Дополнительно</h3>
-            <div class="row">
+        <button class="main-btn" onclick="openWizard()">Забронировать</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО (ВИЗАРД БРОНИРОВАНИЯ) -->
+    <div class="modal-overlay" id="wizardModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="wizardTitle">Выбор даты</h3>
+                <button class="close-btn" onclick="closeWizard()">×</button>
+            </div>
+
+            <!-- Шаг 1: Даты -->
+            <div class="wizard-step active" id="step1">
                 <div class="form-group">
-                    <label>Баня (часов)</label>
-                    <input type="number" id="g_banya" value="0" min="0" max="12" onchange="updatePrice()">
+                    <label>Дата заезда</label>
+                    <input type="date" id="w_checkIn" onchange="saveDraft()">
                 </div>
                 <div class="form-group">
-                    <label>Купель (часов)</label>
-                    <input type="number" id="g_kupel" value="0" min="0" max="12" onchange="updatePrice()">
+                    <label>Дата выезда</label>
+                    <input type="date" id="w_checkOut" onchange="saveDraft()">
+                </div>
+                <div class="nav-btns">
+                    <button class="nav-btn next" onclick="nextStep(2)">Далее</button>
                 </div>
             </div>
-        </div>
 
-        <div class="total-price" id="g_total_price">Итого: 0 ₽</div>
-        
-        <button type="submit" id="g_book_btn" onclick="openBookingForm()">Забронировать</button>
+            <!-- Шаг 2: Время -->
+            <div class="wizard-step" id="step2">
+                <div class="form-group">
+                    <label>Время заезда (с)</label>
+                    <input type="time" id="w_timeIn" value="14:00" onchange="saveDraft()">
+                </div>
+                <div class="form-group">
+                    <label>Время выезда (до)</label>
+                    <input type="time" id="w_timeOut" value="12:00" onchange="saveDraft()">
+                </div>
+                <div class="nav-btns">
+                    <button class="nav-btn back" onclick="nextStep(1)">Назад</button>
+                    <button class="nav-btn next" onclick="nextStep(3)">Далее</button>
+                </div>
+            </div>
 
-        <!-- Скрытая форма бронирования (появляется при нажатии) -->
-        <div class="card hidden" id="bookingFormCard" style="margin-top: 20px; border: 2px solid var(--primary);">
-            <h3 style="margin-top:0">Ваши данные</h3>
-            <div class="form-group"><label>Имя</label><input type="text" id="g_name" placeholder="Иван"></div>
-            <div class="form-group"><label>Телефон</label><input type="tel" id="g_phone" placeholder="+7 900 000-00-00"></div>
-            <button type="submit" onclick="submitBooking()">Подтвердить заказ</button>
+            <!-- Шаг 3: Гости и Допы -->
+            <div class="wizard-step" id="step3">
+                <div class="row">
+                    <div class="form-group">
+                        <label>Взрослые (до 4)</label>
+                        <input type="number" id="w_adults" value="2" min="1" max="4" onchange="calcTotal(); saveDraft();">
+                    </div>
+                    <div class="form-group">
+                        <label>Дети</label>
+                        <input type="number" id="w_children" value="0" min="0" onchange="calcTotal(); saveDraft();">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Баня (часов, 0 - не нужна)</label>
+                    <input type="number" id="w_banya" value="0" min="0" max="12" onchange="calcTotal(); saveDraft();">
+                </div>
+                <div class="form-group">
+                    <label>Купель (часов, 0 - не нужна)</label>
+                    <input type="number" id="w_kupel" value="0" min="0" max="12" onchange="calcTotal(); saveDraft();">
+                </div>
+
+                <div class="nav-btns">
+                    <button class="nav-btn back" onclick="nextStep(2)">Назад</button>
+                    <button class="nav-btn next" onclick="nextStep(4)">К оплате</button>
+                </div>
+            </div>
+
+            <!-- Шаг 4: Чек и Оплата -->
+            <div class="wizard-step" id="step4">
+                <div class="receipt" id="receiptDetails">
+                    <!-- Заполняется через JS -->
+                </div>
+                
+                <div class="form-group">
+                    <label>Ваше имя</label>
+                    <input type="text" id="w_name" placeholder="Иван" onchange="saveDraft()">
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" id="w_phone" placeholder="+7 900..." onchange="saveDraft()">
+                </div>
+
+                <button class="main-btn" style="margin: 20px 0 10px 0; width: 100%;" onclick="submitFinalBooking()">Внести предоплату (30%)</button>
+                <p style="text-align: center; font-size: 12px; color: var(--text-muted);">Полная оплата при заселении. Предоплата невозвратная.</p>
+                
+                <div class="nav-btns">
+                    <button class="nav-btn back" onclick="nextStep(3)">Назад</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ================= ИНТЕРФЕЙС АДМИНА ================= -->
-    <div id="adminView" class="hidden">
-        <h2 style="color: var(--danger);">Панель управления</h2>
-        
-        <div class="admin-section">
-            <div class="admin-title">⚙️ Настройки цен (в сутки / в час)</div>
+    <!-- ПАНЕЛЬ АДМИНА -->
+    <div id="adminPage" class="admin-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin:0; color: var(--danger);">Админ-панель</h2>
+            <button class="nav-btn back" style="padding: 8px 15px; font-size: 14px;" onclick="logoutAdmin()">Выйти</button>
+        </div>
+
+        <div class="admin-card">
+            <div class="admin-title">⚙️ Настройки цен</div>
             <div class="row">
                 <div class="form-group"><label>Домик (сутки)</label><input type="number" id="s_domik" value="5000" onchange="saveSettings()"></div>
                 <div class="form-group"><label>Баня (час)</label><input type="number" id="s_banya" value="1000" onchange="saveSettings()"></div>
+            </div>
+            <div class="row">
                 <div class="form-group"><label>Купель (час)</label><input type="number" id="s_kupel" value="500" onchange="saveSettings()"></div>
+                <div class="form-group"><label>Предоплата %</label><input type="number" id="s_prepay" value="30" onchange="saveSettings()"></div>
             </div>
         </div>
 
-        <div class="admin-section" style="border-color: var(--danger);">
-            <div class="admin-title">🚫 Блокировка даты (уборка/отдых)</div>
+        <div class="admin-card" style="border-color: var(--danger);">
+            <div class="admin-title">🚫 Блокировка дат</div>
             <div class="row">
                 <div class="form-group"><input type="date" id="block_date"></div>
-                <div class="form-group"><button onclick="blockDate()" style="background:var(--danger); color:white; border:none; border-radius:8px; padding:12px; width:100%; font-weight:bold;">Заблокировать</button></div>
+                <div class="form-group"><button class="nav-btn next" style="background:var(--danger);" onclick="blockDate()">Закрыть</button></div>
             </div>
         </div>
 
-        <div class="card">
-            <h3 style="margin-top:0">Календарь</h3>
-            <div class="calendar" id="calendarAdmin"></div>
-        </div>
-
-        <h3>Брони и блокировки</h3>
-        <div id="bookingList"></div>
+        <h3 style="font-size: 18px; margin-bottom: 15px;">Список гостей</h3>
+        <div id="bookingsListAdmin"></div>
     </div>
 
     <!-- Firebase SDK -->
@@ -170,202 +259,232 @@
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
             document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
         }
-        if (localStorage.getItem('theme') === 'light') {
-            document.body.classList.add('light-theme'); document.getElementById('themeBtn').textContent = '☀️';
-        }
+        if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-theme'); document.getElementById('themeBtn').textContent = '☀️'; }
 
-        // --- АДМИНКА ---
-        let isAdmin = false;
-        function toggleAdmin() {
-            if (isAdmin) { logoutAdmin(); return; }
-            const pin = prompt("Пароль админа:");
-            if (pin === '1234') {
-                isAdmin = true;
-                document.getElementById('guestView').classList.add('hidden');
-                document.getElementById('adminView').classList.remove('hidden');
-                loadSettings();
-                if (window.forceRender) window.forceRender();
-            } else if (pin !== null) { alert("Неверный пароль"); }
-        }
-        function logoutAdmin() {
-            isAdmin = false;
-            document.getElementById('adminView').classList.add('hidden');
-            document.getElementById('guestView').classList.remove('hidden');
-            document.getElementById('bookingFormCard').classList.add('hidden');
-        }
-
-        // --- ГЛОБАЛЬНЫЕ ДАННЫЕ ---
-        let allBookings = [];
-        let prices = { domik: 5000, banya: 1000, kupel: 500 };
-
-        // Настройки цен (сохраняются в браузере мамы)
-        function saveSettings() {
-            prices.domik = Number(document.getElementById('s_domik').value) || 0;
-            prices.banya = Number(document.getElementById('s_banya').value) || 0;
-            prices.kupel = Number(document.getElementById('s_kupel').value) || 0;
-            localStorage.setItem('prices', JSON.stringify(prices));
-            updatePrice(); // обновляем цену у гостя
-            renderCalendar('calendarAdmin', true); // обновляем инфу
-        }
+        // --- НАСТРОЙКИ (ЦЕНЫ) ---
+        let prices = { domik: 5000, banya: 1000, kupel: 500, prepay: 30 };
         function loadSettings() {
             const saved = localStorage.getItem('prices');
             if(saved) prices = JSON.parse(saved);
             document.getElementById('s_domik').value = prices.domik;
             document.getElementById('s_banya').value = prices.banya;
             document.getElementById('s_kupel').value = prices.kupel;
+            document.getElementById('s_prepay').value = prices.prepay;
+        }
+        function saveSettings() {
+            prices.domik = Number(document.getElementById('s_domik').value) || 0;
+            prices.banya = Number(document.getElementById('s_banya').value) || 0;
+            prices.kupel = Number(document.getElementById('s_kupel').value) || 0;
+            prices.prepay = Number(document.getElementById('s_prepay').value) || 0;
+            localStorage.setItem('prices', JSON.stringify(prices));
+            calcTotal();
         }
 
-        // --- ЛОГИКА FIREBASE ---
+        // --- ВИЗАРД ---
+        let currentStep = 1;
+        function openWizard() {
+            document.getElementById('wizardModal').classList.add('active');
+            loadDraft(); // Загружаем черновик при открытии
+        }
+        function closeWizard() {
+            document.getElementById('wizardModal').classList.remove('active');
+        }
+        function nextStep(step) {
+            document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+            currentStep = step;
+            
+            const titles = {1: "Даты", 2: "Время", 3: "Гости и Допы", 4: "Ваш заказ"};
+            document.getElementById('wizardTitle').textContent = titles[step];
+            
+            if (step === 4) buildReceipt();
+        }
+
+        // --- ЧЕРНОВИК (Сохранение при вылете) ---
+        function saveDraft() {
+            const draft = {
+                checkIn: document.getElementById('w_checkIn').value,
+                checkOut: document.getElementById('w_checkOut').value,
+                timeIn: document.getElementById('w_timeIn').value,
+                timeOut: document.getElementById('w_timeOut').value,
+                adults: document.getElementById('w_adults').value,
+                children: document.getElementById('w_children').value,
+                banya: document.getElementById('w_banya').value,
+                kupel: document.getElementById('w_kupel').value,
+                name: document.getElementById('w_name').value,
+                phone: document.getElementById('w_phone').value
+            };
+            localStorage.setItem('bookingDraft', JSON.stringify(draft));
+        }
+        function loadDraft() {
+            const saved = localStorage.getItem('bookingDraft');
+            if (saved) {
+                const d = JSON.parse(saved);
+                document.getElementById('w_checkIn').value = d.checkIn || '';
+                document.getElementById('w_checkOut').value = d.checkOut || '';
+                document.getElementById('w_timeIn').value = d.timeIn || '14:00';
+                document.getElementById('w_timeOut').value = d.timeOut || '12:00';
+                document.getElementById('w_adults').value = d.adults || 2;
+                document.getElementById('w_children').value = d.children || 0;
+                document.getElementById('w_banya').value = d.banya || 0;
+                document.getElementById('w_kupel').value = d.kupel || 0;
+                document.getElementById('w_name').value = d.name || '';
+                document.getElementById('w_phone').value = d.phone || '';
+            }
+            calcTotal();
+        }
+        function clearDraft() { localStorage.removeItem('bookingDraft'); }
+
+        // --- РАСЧЕТ ЦЕНЫ ---
+        function calcTotal() {
+            const inD = document.getElementById('w_checkIn').value;
+            const outD = document.getElementById('w_checkOut').value;
+            const banya = Number(document.getElementById('w_banya').value) || 0;
+            const kupel = Number(document.getElementById('w_kupel').value) || 0;
+            
+            let days = 1;
+            if (inD && outD) {
+                const diff = new Date(outD) - new Date(inD);
+                days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            }
+            if (days < 1) days = 1;
+
+            const total = (prices.domik * days) + (prices.banya * banya) + (prices.kupel * kupel);
+            return { total, days, banyaSum: prices.banya * banya, kupelSum: prices.kupel * kupel };
+        }
+
+        function buildReceipt() {
+            const calc = calcTotal();
+            const prepaySum = Math.round(calc.total * (prices.prepay / 100));
+            
+            document.getElementById('receiptDetails').innerHTML = `
+                <div class="receipt-row"><span>Домик (${calc.days} сут.)</span> <span>${prices.domik * calc.days} ₽</span></div>
+                ${calc.banyaSum > 0 ? `<div class="receipt-row"><span>Баня (${document.getElementById('w_banya').value} ч.)</span> <span>${calc.banyaSum} ₽</span></div>` : ''}
+                ${calc.kupelSum > 0 ? `<div class="receipt-row"><span>Купель (${document.getElementById('w_kupel').value} ч.)</span> <span>${calc.kupelSum} ₽</span></div>` : ''}
+                <div class="receipt-total"><span>Итого:</span> <span>${calc.total} ₽</span></div>
+                <div class="receipt-row" style="margin-top: 10px; color: var(--primary);"><span>Предоплата (${prices.prepay}%):</span> <span>${prepaySum} ₽</span></div>
+            `;
+        }
+
+        // --- ОТПРАВКА В FIREBASE ---
         window.addEventListener('load', () => {
             const db = window.db;
             const { collection, addDoc, deleteDoc, doc, onSnapshot } = window.firebaseFns;
             const bookingsCollection = collection(db, "bookings");
+            let allBookings = [];
 
             onSnapshot(bookingsCollection, (snapshot) => {
                 allBookings = [];
-                snapshot.forEach((doc) => { allBookings.push({ id: doc.id, ...doc.data() }); });
-                
-                renderCalendar('calendarGuest', false);
-                renderCalendar('calendarAdmin', true);
-                renderList();
-                updatePrice();
+                snapshot.forEach(doc => allBookings.push({ id: doc.id, ...doc.data() }));
+                renderPreviewCalendar(allBookings);
+                renderAdminList(allBookings);
             });
-            window.forceRender = () => { renderCalendar('calendarAdmin', true); renderList(); };
 
-            // --- ОТРИСОВКА КАЛЕНДАРЯ ---
-            function renderCalendar(elementId, isAdminView) {
-                const calendar = document.getElementById(elementId);
-                if(!calendar) return;
-                calendar.innerHTML = '';
+            window.submitFinalBooking = async function() {
+                const calc = calcTotal();
+                const name = document.getElementById('w_name').value;
+                const phone = document.getElementById('w_phone').value;
+                
+                if(!name || !phone) { alert("Введите имя и телефон!"); return; }
+
+                const newBooking = {
+                    checkIn: document.getElementById('w_checkIn').value,
+                    checkOut: document.getElementById('w_checkOut').value,
+                    timeIn: document.getElementById('w_timeIn').value,
+                    timeOut: document.getElementById('w_timeOut').value,
+                    adults: document.getElementById('w_adults').value,
+                    children: document.getElementById('w_children').value,
+                    banya: document.getElementById('w_banya').value,
+                    kupel: document.getElementById('w_kupel').value,
+                    name: name, phone: phone,
+                    total: calc.total,
+                    prepay: Math.round(calc.total * (prices.prepay / 100))
+                };
+
+                try {
+                    await addDoc(bookingsCollection, newBooking);
+                    alert('Заявка принята! Ожидайте звонка.');
+                    clearDraft();
+                    closeWizard();
+                } catch(e) { alert('Ошибка: ' + e.message); }
+            }
+
+            window.blockDate = async function() {
+                const date = document.getElementById('block_date').value;
+                if(!date) return;
+                await addDoc(bookingsCollection, { blocked: true, date: date, name: "Блокировка" });
+                document.getElementById('block_date').value = '';
+            }
+
+            window.deleteBooking = async function(id) {
+                if(confirm('Удалить?')) await deleteDoc(doc(db, "bookings", id));
+            }
+
+            // --- ОТРИСОВКА ПРЕВЬЮ КАЛЕНДАРЯ ---
+            function renderPreviewCalendar(bookings) {
+                const cal = document.getElementById('previewCalendar');
+                cal.innerHTML = '';
                 const now = new Date();
                 const year = now.getFullYear(), month = now.getMonth();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                
-                const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-                daysOfWeek.forEach(d => {
-                    const div = document.createElement('div');
-                    div.textContent = d; div.style.textAlign = 'center'; div.style.fontSize = '12px'; div.style.color = 'var(--text-muted)';
-                    calendar.appendChild(div);
-                });
-
                 const firstDay = new Date(year, month, 1).getDay();
                 const offset = firstDay === 0 ? 6 : firstDay - 1;
-                for (let i = 0; i < offset; i++) calendar.appendChild(document.createElement('div'));
+
+                for (let i = 0; i < offset; i++) cal.innerHTML += `<div class="cal-day empty"></div>`;
 
                 for (let i = 1; i <= daysInMonth; i++) {
-                    const div = document.createElement('div');
-                    div.classList.add('day'); div.textContent = i;
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                    
-                    // Проверяем занятость
-                    const dayBooking = allBookings.find(b => b.date === dateStr || b.blocked);
-                    if (dayBooking) {
-                        div.classList.add(dayBooking.blocked ? 'blocked' : 'booked');
-                    }
-                    calendar.appendChild(div);
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                    const isBusy = bookings.some(b => b.date === dateStr || b.checkIn === dateStr);
+                    cal.innerHTML += `<div class="cal-day ${isBusy ? 'busy' : 'free'}">${i}</div>`;
                 }
             }
 
-            // --- ОТРИСОВКА СПИСКА (АДМИН) ---
-            function renderList() {
-                const list = document.getElementById('bookingList');
-                if(!list) return;
+            // --- ОТРИСОВКА СПИСКА АДМИНА ---
+            function renderAdminList(bookings) {
+                const list = document.getElementById('bookingsListAdmin');
                 list.innerHTML = '';
+                bookings.sort((a,b) => (a.date || '').localeCompare(b.date || ''));
                 
-                allBookings.sort((a, b) => a.date.localeCompare(b.date));
-                
-                allBookings.forEach((b) => {
+                bookings.forEach(b => {
                     const div = document.createElement('div');
-                    div.className = 'booking-item' + (b.blocked ? ' blocked-item' : '');
-                    
-                    let content = '';
+                    div.className = 'booking-item' + (b.blocked ? ' blocked' : '');
                     if (b.blocked) {
-                        content = `<strong>${b.date}</strong> — 🚫 ЗАБЛОКИРОВАНО`;
+                        div.innerHTML = `<strong>${b.date}</strong> — 🚫 Блокировка <button onclick="deleteBooking('${b.id}')" style="float:right; background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:5px;">X</button>`;
                     } else {
-                        content = `<strong>${b.date}</strong> — ${b.name} <br>
-                                   <small>👥 ${b.adults} взр. ${b.children > 0 ? ', ' + b.children + ' дет.' : ''}</small><br>
-                                   <small>Допы: Баня ${b.banya}ч, Купель ${b.kupel}ч</small><br>
-                                   <strong>Сумма: ${b.total}₽</strong>`;
+                        div.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <strong>${b.name}</strong> (${b.phone})<br>
+                                    <small>${b.checkIn} ${b.timeIn} → ${b.checkOut} ${b.timeOut}</small><br>
+                                    <small>👥 ${b.adults} взр. ${b.children > 0 ? ', ' + b.children + ' дет.' : ''} | Баня: ${b.banya}ч | Купель: ${b.kupel}ч</small><br>
+                                    <strong style="color:var(--accent)">Итого: ${b.total}₽ (Предоплата: ${b.prepay}₽)</strong>
+                                </div>
+                                <button onclick="deleteBooking('${b.id}')" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:5px;">X</button>
+                            </div>
+                        `;
                     }
-
-                    div.innerHTML = `
-                        ${content}
-                        <button class="del-btn" onclick="deleteBooking('${b.id}')">X</button>
-                    `;
                     list.appendChild(div);
                 });
             }
-
-            // --- РАСЧЕТ ЦЕНЫ (ГОСТЬ) ---
-            window.updatePrice = function() {
-                const inDate = document.getElementById('g_checkIn').value;
-                const outDate = document.getElementById('g_checkOut').value;
-                const banya = Number(document.getElementById('g_banya').value) || 0;
-                const kupel = Number(document.getElementById('g_kupel').value) || 0;
-                
-                let days = 1;
-                if (inDate && outDate) {
-                    const diff = new Date(outDate) - new Date(inDate);
-                    days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                }
-                if (days < 1) days = 1;
-
-                const total = (prices.domik * days) + (prices.banya * banya) + (prices.kupel * kupel);
-                document.getElementById('g_total_price').textContent = `Итого: ${total} ₽`;
-                return total;
-            }
-
-            document.getElementById('g_checkIn').onchange = updatePrice;
-            document.getElementById('g_checkOut').onchange = updatePrice;
-
-            // --- ОТПРАВКА ЗАКАЗА ---
-            window.openBookingForm = function() {
-                document.getElementById('bookingFormCard').classList.remove('hidden');
-            }
-
-            window.submitBooking = async function() {
-                const name = document.getElementById('g_name').value;
-                const phone = document.getElementById('g_phone').value;
-                const date = document.getElementById('g_checkIn').value;
-                const banya = document.getElementById('g_banya').value;
-                const kupel = document.getElementById('g_kupel').value;
-                
-                if (!name || !phone || !date) { alert('Заполните имя, телефон и дату заезда!'); return; }
-
-                const total = updatePrice();
-                const newBooking = {
-                    name: name, phone: phone, date: date,
-                    adults: document.getElementById('g_adults').value,
-                    children: document.getElementById('g_children').value,
-                    banya: banya, kupel: kupel, total: total, blocked: false
-                };
-                
-                try {
-                    await addDoc(bookingsCollection, newBooking);
-                    alert('Заявка отправлена! Мы свяжемся с вами.');
-                    document.getElementById('bookingFormCard').classList.add('hidden');
-                    document.getElementById('g_name').value = '';
-                    document.getElementById('g_phone').value = '';
-                } catch (error) { alert('Ошибка: ' + error.message); }
-            }
-
-            // --- БЛОКИРОВКА ДАТЫ (АДМИН) ---
-            window.blockDate = async function() {
-                const date = document.getElementById('block_date').value;
-                if (!date) return;
-                try {
-                    await addDoc(bookingsCollection, { date: date, blocked: true });
-                    document.getElementById('block_date').value = '';
-                } catch (error) { alert('Ошибка: ' + error.message); }
-            }
-
-            // --- УДАЛЕНИЕ ---
-            window.deleteBooking = async function(id) {
-                if (confirm('Удалить запись?')) {
-                    try { await deleteDoc(doc(db, "bookings", id)); } catch (error) { console.error(error); }
-                }
-            };
         });
+
+        // --- АДМИНКА ---
+        let isAdmin = false;
+        function toggleAdmin() {
+            if(isAdmin) { logoutAdmin(); return; }
+            const pin = prompt("Пароль:");
+            if(pin === '1234') {
+                isAdmin = true;
+                document.getElementById('mainPage').style.display = 'none';
+                document.getElementById('adminPage').classList.add('active');
+                loadSettings();
+            } else if(pin !== null) alert("Неверный пароль");
+        }
+        function logoutAdmin() {
+            isAdmin = false;
+            document.getElementById('mainPage').style.display = 'block';
+            document.getElementById('adminPage').classList.remove('active');
+        }
     </script>
 </body>
 </html>
