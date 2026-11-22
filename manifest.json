@@ -1,10 +1,11 @@
 {
   "name": "Домик в деревне",
   "short_name": "Домик",
+  "description": "Загородный дом с баней на дровах и горячей купелью фурако. Онлайн-бронирование.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#007bff",
+  "background_color": "#0e1113",
+  "theme_color": "#0f1214",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/263/263115.png",
