@@ -22,7 +22,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: background 0.3s; }
         
-        /* Хедер */
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--bg); position: sticky; top: 0; z-index: 10; }
         h1 { font-size: 18px; margin: 0; font-weight: 600; }
         .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;}
@@ -72,6 +71,20 @@
         .nav-btn.next { background: var(--primary); color: white; }
         .nav-btn.back { background: var(--border); color: var(--text); }
 
+        /* Круглые часы */
+        .time-selector { margin-bottom: 20px; }
+        .time-tabs { display: flex; background: var(--bg); padding: 5px; border-radius: 12px; margin-bottom: 15px; }
+        .time-tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; color: var(--text-muted); transition: 0.2s;}
+        .time-tab.active { background: var(--card); color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        .clock-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .clock-hour { aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: 0.2s; position: relative; }
+        .clock-hour span { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+        .clock-hour.free { border-color: var(--accent); color: var(--accent); }
+        .clock-hour.free:hover { background: rgba(16, 185, 129, 0.1); }
+        .clock-hour.busy { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); cursor: not-allowed; opacity: 0.6;}
+        .clock-hour.selected { background: var(--primary); border-color: var(--primary); color: white; }
+
         /* Чек */
         .receipt { background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; }
         .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
@@ -82,7 +95,6 @@
         .admin-panel.active { display: block; }
         .admin-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .admin-title { color: var(--primary); font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        
         .booking-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
         .booking-item.blocked { border-left-color: var(--danger); opacity: 0.7; }
     </style>
@@ -120,7 +132,7 @@
     <div class="modal-overlay" id="wizardModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="wizardTitle">Выбор даты</h3>
+                <h3 class="modal-title" id="wizardTitle">Даты</h3>
                 <button class="close-btn" onclick="closeWizard()">×</button>
             </div>
 
@@ -135,19 +147,20 @@
                     <input type="date" id="w_checkOut" onchange="saveDraft()">
                 </div>
                 <div class="nav-btns">
-                    <button class="nav-btn next" onclick="nextStep(2)">Далее</button>
+                    <button class="nav-btn next" onclick="goToTimeStep()">Далее</button>
                 </div>
             </div>
 
-            <!-- Шаг 2: Время -->
+            <!-- Шаг 2: Время (Круглые часы) -->
             <div class="wizard-step" id="step2">
-                <div class="form-group">
-                    <label>Время заезда (с)</label>
-                    <input type="time" id="w_timeIn" value="14:00" onchange="saveDraft()">
-                </div>
-                <div class="form-group">
-                    <label>Время выезда (до)</label>
-                    <input type="time" id="w_timeOut" value="12:00" onchange="saveDraft()">
+                <div class="time-selector">
+                    <div class="time-tabs">
+                        <div class="time-tab active" id="tabCheckIn" onclick="switchTimeTab('in')">Заезд (с)</div>
+                        <div class="time-tab" id="tabCheckOut" onclick="switchTimeTab('out')">Выезд (до)</div>
+                    </div>
+                    <div class="clock-grid" id="clockGrid">
+                        <!-- Часы генерируются через JS -->
+                    </div>
                 </div>
                 <div class="nav-btns">
                     <button class="nav-btn back" onclick="nextStep(1)">Назад</button>
@@ -198,7 +211,7 @@
                     <input type="tel" id="w_phone" placeholder="+7 900..." onchange="saveDraft()">
                 </div>
 
-                <button class="main-btn" style="margin: 20px 0 10px 0; width: 100%;" onclick="submitFinalBooking()">Внести предоплату (30%)</button>
+                <button class="main-btn" style="margin: 20px 0 10px 0; width: 100%;" onclick="submitFinalBooking()">Внести предоплату</button>
                 <p style="text-align: center; font-size: 12px; color: var(--text-muted);">Полная оплата при заселении. Предоплата невозвратная.</p>
                 
                 <div class="nav-btns">
@@ -261,7 +274,7 @@
         }
         if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-theme'); document.getElementById('themeBtn').textContent = '☀️'; }
 
-        // --- НАСТРОЙКИ (ЦЕНЫ) ---
+        // --- НАСТРОЙКИ ---
         let prices = { domik: 5000, banya: 1000, kupel: 500, prepay: 30 };
         function loadSettings() {
             const saved = localStorage.getItem('prices');
@@ -280,33 +293,93 @@
             calcTotal();
         }
 
-        // --- ВИЗАРД ---
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ВИЗАРДА ---
+        let allBookings = [];
         let currentStep = 1;
+        let selectedTimeIn = "14:00";
+        let selectedTimeOut = "12:00";
+        let currentTimeTab = 'in';
+
         function openWizard() {
             document.getElementById('wizardModal').classList.add('active');
-            loadDraft(); // Загружаем черновик при открытии
+            loadDraft();
+            nextStep(1);
         }
-        function closeWizard() {
-            document.getElementById('wizardModal').classList.remove('active');
-        }
+        function closeWizard() { document.getElementById('wizardModal').classList.remove('active'); }
+        
         function nextStep(step) {
             document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
             document.getElementById('step' + step).classList.add('active');
             currentStep = step;
-            
             const titles = {1: "Даты", 2: "Время", 3: "Гости и Допы", 4: "Ваш заказ"};
             document.getElementById('wizardTitle').textContent = titles[step];
-            
             if (step === 4) buildReceipt();
         }
 
-        // --- ЧЕРНОВИК (Сохранение при вылете) ---
+        // --- ЧАСЫ ---
+        function goToTimeStep() {
+            const inD = document.getElementById('w_checkIn').value;
+            const outD = document.getElementById('w_checkOut').value;
+            if(!inD || !outD) { alert("Выберите обе даты!"); return; }
+            if(new Date(inD) >= new Date(outD)) { alert("Дата выезда должна быть позже даты заезда!"); return; }
+            switchTimeTab('in'); // По умолчанию открываем выбор заезда
+            nextStep(2);
+        }
+
+        function switchTimeTab(tab) {
+            currentTimeTab = tab;
+            document.getElementById('tabCheckIn').classList.toggle('active', tab === 'in');
+            document.getElementById('tabCheckOut').classList.toggle('active', tab === 'out');
+            renderClocks();
+        }
+
+        function renderClocks() {
+            const grid = document.getElementById('clockGrid');
+            grid.innerHTML = '';
+            
+            // Генерируем часы с 8:00 до 22:00
+            const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+            const selectedTime = currentTimeTab === 'in' ? selectedTimeIn : selectedTimeOut;
+            const currentDate = currentTimeTab === 'in' ? document.getElementById('w_checkIn').value : document.getElementById('w_checkOut').value;
+
+            hours.forEach(h => {
+                const timeStr = `${String(h).padStart(2, '0')}:00`;
+                const div = document.createElement('div');
+                div.className = 'clock-hour';
+                
+                // Проверяем, занято ли это время в этот день
+                const isBusy = allBookings.some(b => {
+                    if (b.blocked && b.date === currentDate) return true;
+                    if (b.checkIn === currentDate && b.timeIn === timeStr) return true; // Упрощенная проверка
+                    return false;
+                });
+
+                if (isBusy) {
+                    div.classList.add('busy');
+                    div.innerHTML = `${timeStr}<span>Занято</span>`;
+                } else {
+                    div.classList.add('free');
+                    div.innerHTML = timeStr;
+                    if (timeStr === selectedTime) div.classList.add('selected');
+                    
+                    div.onclick = () => {
+                        if (currentTimeTab === 'in') selectedTimeIn = timeStr;
+                        else selectedTimeOut = timeStr;
+                        renderClocks();
+                        saveDraft();
+                    };
+                }
+                grid.appendChild(div);
+            });
+        }
+
+        // --- ЧЕРНОВИК ---
         function saveDraft() {
             const draft = {
                 checkIn: document.getElementById('w_checkIn').value,
                 checkOut: document.getElementById('w_checkOut').value,
-                timeIn: document.getElementById('w_timeIn').value,
-                timeOut: document.getElementById('w_timeOut').value,
+                timeIn: selectedTimeIn,
+                timeOut: selectedTimeOut,
                 adults: document.getElementById('w_adults').value,
                 children: document.getElementById('w_children').value,
                 banya: document.getElementById('w_banya').value,
@@ -316,14 +389,15 @@
             };
             localStorage.setItem('bookingDraft', JSON.stringify(draft));
         }
+        
         function loadDraft() {
             const saved = localStorage.getItem('bookingDraft');
             if (saved) {
                 const d = JSON.parse(saved);
                 document.getElementById('w_checkIn').value = d.checkIn || '';
                 document.getElementById('w_checkOut').value = d.checkOut || '';
-                document.getElementById('w_timeIn').value = d.timeIn || '14:00';
-                document.getElementById('w_timeOut').value = d.timeOut || '12:00';
+                selectedTimeIn = d.timeIn || '14:00';
+                selectedTimeOut = d.timeOut || '12:00';
                 document.getElementById('w_adults').value = d.adults || 2;
                 document.getElementById('w_children').value = d.children || 0;
                 document.getElementById('w_banya').value = d.banya || 0;
@@ -333,22 +407,19 @@
             }
             calcTotal();
         }
-        function clearDraft() { localStorage.removeItem('bookingDraft'); }
 
-        // --- РАСЧЕТ ЦЕНЫ ---
+        // --- РАСЧЕТ ---
         function calcTotal() {
             const inD = document.getElementById('w_checkIn').value;
             const outD = document.getElementById('w_checkOut').value;
             const banya = Number(document.getElementById('w_banya').value) || 0;
             const kupel = Number(document.getElementById('w_kupel').value) || 0;
-            
             let days = 1;
             if (inD && outD) {
                 const diff = new Date(outD) - new Date(inD);
                 days = Math.ceil(diff / (1000 * 60 * 60 * 24));
             }
             if (days < 1) days = 1;
-
             const total = (prices.domik * days) + (prices.banya * banya) + (prices.kupel * kupel);
             return { total, days, banyaSum: prices.banya * banya, kupelSum: prices.kupel * kupel };
         }
@@ -356,9 +427,10 @@
         function buildReceipt() {
             const calc = calcTotal();
             const prepaySum = Math.round(calc.total * (prices.prepay / 100));
-            
             document.getElementById('receiptDetails').innerHTML = `
                 <div class="receipt-row"><span>Домик (${calc.days} сут.)</span> <span>${prices.domik * calc.days} ₽</span></div>
+                <div class="receipt-row"><span>Заезд: ${document.getElementById('w_checkIn').value} в ${selectedTimeIn}</span></div>
+                <div class="receipt-row"><span>Выезд: ${document.getElementById('w_checkOut').value} в ${selectedTimeOut}</span></div>
                 ${calc.banyaSum > 0 ? `<div class="receipt-row"><span>Баня (${document.getElementById('w_banya').value} ч.)</span> <span>${calc.banyaSum} ₽</span></div>` : ''}
                 ${calc.kupelSum > 0 ? `<div class="receipt-row"><span>Купель (${document.getElementById('w_kupel').value} ч.)</span> <span>${calc.kupelSum} ₽</span></div>` : ''}
                 <div class="receipt-total"><span>Итого:</span> <span>${calc.total} ₽</span></div>
@@ -366,32 +438,31 @@
             `;
         }
 
-        // --- ОТПРАВКА В FIREBASE ---
+        // --- FIREBASE ---
         window.addEventListener('load', () => {
             const db = window.db;
             const { collection, addDoc, deleteDoc, doc, onSnapshot } = window.firebaseFns;
             const bookingsCollection = collection(db, "bookings");
-            let allBookings = [];
-
+            
             onSnapshot(bookingsCollection, (snapshot) => {
                 allBookings = [];
                 snapshot.forEach(doc => allBookings.push({ id: doc.id, ...doc.data() }));
                 renderPreviewCalendar(allBookings);
                 renderAdminList(allBookings);
+                if(currentStep === 2) renderClocks(); // Обновляем часы, если открыты
             });
 
             window.submitFinalBooking = async function() {
                 const calc = calcTotal();
                 const name = document.getElementById('w_name').value;
                 const phone = document.getElementById('w_phone').value;
-                
                 if(!name || !phone) { alert("Введите имя и телефон!"); return; }
 
                 const newBooking = {
                     checkIn: document.getElementById('w_checkIn').value,
                     checkOut: document.getElementById('w_checkOut').value,
-                    timeIn: document.getElementById('w_timeIn').value,
-                    timeOut: document.getElementById('w_timeOut').value,
+                    timeIn: selectedTimeIn,
+                    timeOut: selectedTimeOut,
                     adults: document.getElementById('w_adults').value,
                     children: document.getElementById('w_children').value,
                     banya: document.getElementById('w_banya').value,
@@ -400,11 +471,10 @@
                     total: calc.total,
                     prepay: Math.round(calc.total * (prices.prepay / 100))
                 };
-
                 try {
                     await addDoc(bookingsCollection, newBooking);
-                    alert('Заявка принята! Ожидайте звонка.');
-                    clearDraft();
+                    alert('Заявка принята!');
+                    localStorage.removeItem('bookingDraft');
                     closeWizard();
                 } catch(e) { alert('Ошибка: ' + e.message); }
             }
@@ -420,7 +490,6 @@
                 if(confirm('Удалить?')) await deleteDoc(doc(db, "bookings", id));
             }
 
-            // --- ОТРИСОВКА ПРЕВЬЮ КАЛЕНДАРЯ ---
             function renderPreviewCalendar(bookings) {
                 const cal = document.getElementById('previewCalendar');
                 cal.innerHTML = '';
@@ -434,17 +503,16 @@
 
                 for (let i = 1; i <= daysInMonth; i++) {
                     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                    // Проверяем, есть ли бронь на этот день (или блокировка)
                     const isBusy = bookings.some(b => b.date === dateStr || b.checkIn === dateStr);
                     cal.innerHTML += `<div class="cal-day ${isBusy ? 'busy' : 'free'}">${i}</div>`;
                 }
             }
 
-            // --- ОТРИСОВКА СПИСКА АДМИНА ---
             function renderAdminList(bookings) {
                 const list = document.getElementById('bookingsListAdmin');
                 list.innerHTML = '';
-                bookings.sort((a,b) => (a.date || '').localeCompare(b.date || ''));
-                
+                bookings.sort((a,b) => (a.date || a.checkIn || '').localeCompare(b.date || b.checkIn || ''));
                 bookings.forEach(b => {
                     const div = document.createElement('div');
                     div.className = 'booking-item' + (b.blocked ? ' blocked' : '');
